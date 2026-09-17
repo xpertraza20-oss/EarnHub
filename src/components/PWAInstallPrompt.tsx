@@ -17,7 +17,8 @@ export default function PWAInstallPrompt() {
     
     setIsStandalone(standalone);
 
-    if (standalone) return;
+    const hasDismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (standalone || hasDismissed) return;
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -44,6 +45,7 @@ export default function PWAInstallPrompt() {
     window.addEventListener('appinstalled', () => {
       setShowPrompt(false);
       setDeferredPrompt(null);
+      localStorage.setItem('pwa-prompt-dismissed', 'true');
     });
 
     return () => {
@@ -59,8 +61,14 @@ export default function PWAInstallPrompt() {
     
     if (outcome === 'accepted') {
       setShowPrompt(false);
+      localStorage.setItem('pwa-prompt-dismissed', 'true');
     }
     setDeferredPrompt(null);
+  };
+
+  const handleDismiss = () => {
+    setShowPrompt(false);
+    localStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
   if (!showPrompt || isStandalone) return null;
@@ -94,7 +102,7 @@ export default function PWAInstallPrompt() {
             </button>
           )}
           <button 
-            onClick={() => setShowPrompt(false)}
+            onClick={handleDismiss}
             className="w-8 h-8 flex items-center justify-center text-dynamic-sec hover:text-dynamic hover:bg-dynamic/10 rounded-full transition-colors bg-white/5"
           >
             <X size={16} />
