@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password      String
+  phone         String?
+  country       String   @default("Pakistan")
+  balance       Float    @default(0)
+  pendingBalance Float   @default(0)
+  referralCode  String   @unique
+  referredBy    Int?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  completedTasks CompletedTask[]
+  withdrawals    Withdrawal[]
+  referralsGiven Referral[] @relation("Referrer")
+  referralsReceived Referral[] @relation("Referred")
+}
+
+model Task {
+  id              Int      @id @default(autoincrement())
+  providerId      Int?
+  title           String
+  description     String
+  rewardAmount    Float
+  category        String
+  externalTaskId  String?
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provider        Provider? @relation(fields: [providerId], references: [id])
+  completedTasks  CompletedTask[]
+}
+
+model Provider {
+  id            Int      @id @default(autoincrement())
+  name          String
+  apiKey        String?
+  apiSecret     String?
+  postbackUrl   String?
+  status        String   @default("active")
+  commissionRate Float   @default(0.2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tasks         Task[]
+}
+
+model CompletedTask {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  taskId        Int
+  status        String   @default("pending")
+  rewardAmount  Float
+  proof         String?
+  completedAt   DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+  task          Task     @relation(fields: [taskId], references: [id])
+}
+
+model Withdrawal {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  amount        Float
+  method        String
+  accountDetails String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Referral {
+  id            Int      @id @default(autoincrement())
+  referrerId    Int
+  referredId    Int
+  rewardEarned  Float   @default(10)
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+
+  referrer      User     @relation("Referrer", fields: [referrerId], references: [id])
+  referred      User     @relation("Referred", fields: [referredId], references: [id])
+}

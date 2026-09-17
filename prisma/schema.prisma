@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  avatar        String?
+  phone         String?
+  country       String   @default("Pakistan")
+  balance       Float    @default(0)
+  pendingBalance Float   @default(0)
+  role          String   @default("user") // Added role as requested
+  referralCode  String   @unique
+  referredBy    String?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  completedTasks CompletedTask[]
+  withdrawals    Withdrawal[]
+  referralsGiven Referral[] @relation("Referrer")
+  referralsReceived Referral[] @relation("Referred")
+}
+
+model Task {
+  id              String   @id @default(cuid())
+  providerId      String?
+  title           String
+  description     String
+  rewardAmount    Float
+  category        String
+  externalTaskId  String?
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provider        Provider? @relation(fields: [providerId], references: [id])
+  completedTasks  CompletedTask[]
+}
+
+model Provider {
+  id            String   @id @default(cuid())
+  name          String
+  apiKey        String?
+  apiSecret     String?
+  postbackUrl   String?
+  status        String   @default("active")
+  commissionRate Float   @default(0.2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tasks         Task[]
+}
+
+model CompletedTask {
+  id            String   @id @default(cuid())
+  userId        String
+  taskId        String?  // Made optional because of offerwalls
+  provider      String?  // Added provider as requested
+  status        String   @default("completed") // Default changed to completed as requested
+  rewardAmount  Float
+  proof         String?
+  tx_id         String?  @unique // Added tx_id as requested
+  completedAt   DateTime @default(now())
+  createdAt     DateTime @default(now()) // Added createdAt as requested
+
+  user          User     @relation(fields: [userId], references: [id])
+  task          Task?    @relation(fields: [taskId], references: [id])
+}
+
+model Withdrawal {
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Float
+  method        String
+  accountDetails String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String
+  referredId    String
+  rewardEarned  Float   @default(10)
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+
+  referrer      User     @relation("Referrer", fields: [referrerId], references: [id])
+  referred      User     @relation("Referred", fields: [referredId], references: [id])
+}
