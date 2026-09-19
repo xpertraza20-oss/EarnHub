@@ -4,11 +4,11 @@ import { cookies } from 'next/headers';
 import db from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-const rpID = process.env.NODE_ENV === 'development' ? 'localhost' : new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').hostname;
-const origin = process.env.NEXT_PUBLIC_APP_URL || `http://${rpID}:3000`;
-
 export async function POST(request: NextRequest) {
   try {
+    const host = request.headers.get('host') || 'localhost:3000';
+    const origin = request.headers.get('origin') || `https://${host}`;
+    const rpID = host.split(':')[0];
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

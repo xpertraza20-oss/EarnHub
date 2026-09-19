@@ -4,10 +4,10 @@ import type { AuthenticatorTransport } from '@simplewebauthn/server';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
 
-const rpID = process.env.NODE_ENV === 'development' ? 'localhost' : new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').hostname;
-
 export async function POST(request: NextRequest) {
   try {
+    const host = request.headers.get('host') || 'localhost:3000';
+    const rpID = host.split(':')[0];
     const { email } = await request.json();
     
     if (!email) {
