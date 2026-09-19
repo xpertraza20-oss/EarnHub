@@ -21,10 +21,11 @@ export async function POST(request: NextRequest) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as { id?: string };
-        if (decoded && decoded.id) {
+        const decoded = jwt.verify(token, JWT_SECRET) as { id?: string, userId?: string };
+        const userId = decoded.userId || decoded.id;
+        if (userId) {
           await db.user.update({
-            where: { id: decoded.id },
+            where: { id: userId },
             data: { lastActiveAt: new Date() }
           });
         }
