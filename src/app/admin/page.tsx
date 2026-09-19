@@ -15,6 +15,8 @@ export default function AdminPage() {
     totalTasks: 0,
     pendingWithdrawals: 0,
     totalEarnings: 0,
+    totalSiteVisits: 0,
+    activeUsersOnline: 0,
     chartData: []
   });
   const [users, setUsers] = useState<any[]>([]);
@@ -97,7 +99,9 @@ export default function AdminPage() {
     { id: 'users', label: `Users (${users.length})` },
     { id: 'offerwalls', label: 'Offerwalls' },
     { id: 'gateways', label: 'Payment APIs' },
-    { id: 'withdrawals', label: `Withdrawals (${withdrawals.filter(w=>w.status === 'pending').length})` }
+    { id: 'withdrawals', label: `Withdrawals (${withdrawals.filter(w=>w.status === 'pending').length})` },
+    { id: 'analytics', label: `Live Visits (${stats.totalSiteVisits || 0})` },
+    { id: 'online', label: `🟢 Online Now (${stats.activeUsersOnline || 0})` }
   ];
 
   return (
@@ -373,6 +377,22 @@ export default function AdminPage() {
                 <p className="text-dynamic-sec mt-2">No pending withdrawals to process.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Analytics & Online Tabs Placeholder */}
+        {(activeTab === 'analytics' || activeTab === 'online') && (
+          <div className="glass-panel rounded-3xl p-12 text-center animate-fade-in-up">
+            <div className="w-20 h-20 mx-auto bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 relative">
+              <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping"></div>
+              <Users size={32} className="text-emerald-500" />
+            </div>
+            <h3 className="text-3xl font-extrabold text-dynamic">
+              {activeTab === 'analytics' ? `Total Today: ${stats.totalSiteVisits}` : `Active Now: ${stats.activeUsersOnline}`}
+            </h3>
+            <p className="text-dynamic-sec mt-2 font-medium">
+              {activeTab === 'analytics' ? 'Total visits to the platform today.' : 'Users actively engaging with the app right now.'}
+            </p>
           </div>
         )}
       </div>

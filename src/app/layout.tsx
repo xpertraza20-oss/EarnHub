@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const inter = Inter({ subsets: ["latin"] });
 const poppins = Poppins({ 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-icon.png" />
       </head>
       <body className={`${inter.className} ${poppins.variable}`}>
+        <AnalyticsTracker />
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
           {/* Background Decorative Blobs */}
           <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[var(--glow-color)] blur-[100px] pointer-events-none -z-10 transition-colors duration-500" />

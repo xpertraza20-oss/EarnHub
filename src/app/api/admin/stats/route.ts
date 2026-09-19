@@ -28,12 +28,17 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    const fifteenMinutesAgo = new Date();
+    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+
     const [
       totalUsers,
       totalTasks,
       pendingWithdrawals,
       totalEarnings,
-      recentCompletedTasks
+      recentCompletedTasks,
+      totalVisitsResult,
+      activeUsersOnline
     ] = await Promise.all([
       db.user.count(),
       db.completedTask.count(),
@@ -42,8 +47,12 @@ export async function GET(request: NextRequest) {
       db.completedTask.findMany({
         where: { completedAt: { gte: sevenDaysAgo } },
         select: { completedAt: true, rewardAmount: true }
-      })
+      }),
+      db.siteAnalytics.aggregate({ _sum: { visits: true } }),
+      db.user.count({ where: { lastActiveAt: { gte: fifteenMinutesAgo } } })
     ]);
+
+    const totalSiteVisits = totalVisitsResult._sum.visits || 0;
 
     // Aggregate chart data by day
     const chartDataMap: Record<string, number> = {};
@@ -83,6 +92,8 @@ export async function GET(request: NextRequest) {
       totalTasks,
       pendingWithdrawals,
       totalEarnings: totalEarnings._sum.rewardAmount || 0,
+      totalSiteVisits,
+      activeUsersOnline,
       chartData: finalChartData
     };
 

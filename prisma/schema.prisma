@@ -22,6 +22,7 @@ model User {
   referredBy    String?
   status        String   @default("active")
   theme         String   @default("dark")
+  lastActiveAt  DateTime @default(now()) // Added for tracking active users
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -30,6 +31,12 @@ model User {
   referralsGiven Referral[] @relation("Referrer")
   referralsReceived Referral[] @relation("Referred")
   passkeys       Passkey[]
+}
+
+model SiteAnalytics {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @default(dbgenerated("CURRENT_DATE"))
+  visits    Int      @default(0)
 }
 
 model Passkey {
