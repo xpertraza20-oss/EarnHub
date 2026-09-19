@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         expectedRPID: rpID,
         credential: {
           id: passkey.credentialID,
-          publicKey: passkey.credentialPublicKey,
+          publicKey: new Uint8Array(passkey.credentialPublicKey),
           counter: Number(passkey.counter),
         },
       });
