@@ -12,7 +12,7 @@ export default function AnalyticsTracker() {
 
     const trackVisit = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
         const headers: HeadersInit = { 'Content-Type': 'application/json' };
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;

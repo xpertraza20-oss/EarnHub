@@ -17,6 +17,7 @@ export default function AdminPage() {
     totalEarnings: 0,
     totalSiteVisits: 0,
     activeUsersOnline: 0,
+    activeUsersList: [] as any[],
     chartData: []
   });
   const [users, setUsers] = useState<any[]>([]);
@@ -380,19 +381,60 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Analytics & Online Tabs Placeholder */}
-        {(activeTab === 'analytics' || activeTab === 'online') && (
+        {/* Analytics & Online Tabs Content */}
+        {activeTab === 'analytics' && (
           <div className="glass-panel rounded-3xl p-12 text-center animate-fade-in-up">
-            <div className="w-20 h-20 mx-auto bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 relative">
-              <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping"></div>
-              <Users size={32} className="text-emerald-500" />
+            <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-6 relative">
+              <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+              <Users size={32} className="text-blue-500" />
             </div>
-            <h3 className="text-3xl font-extrabold text-dynamic">
-              {activeTab === 'analytics' ? `Total Today: ${stats.totalSiteVisits}` : `Active Now: ${stats.activeUsersOnline}`}
-            </h3>
-            <p className="text-dynamic-sec mt-2 font-medium">
-              {activeTab === 'analytics' ? 'Total visits to the platform today.' : 'Users actively engaging with the app right now.'}
-            </p>
+            <h3 className="text-3xl font-extrabold text-dynamic">Total Today: {stats.totalSiteVisits || 0}</h3>
+            <p className="text-dynamic-sec mt-2 font-medium">Total visits to the platform today, including anonymous traffic.</p>
+          </div>
+        )}
+
+        {activeTab === 'online' && (
+          <div className="glass-panel rounded-3xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-dynamic bg-white/5 dark:bg-black/20 flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center relative">
+                <div className="absolute w-3 h-3 bg-emerald-500 rounded-full animate-pulse top-0 right-0"></div>
+                <Users size={24} className="text-emerald-500" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-dynamic text-xl">Active Users Now ({stats.activeUsersOnline || 0})</h3>
+                <p className="text-sm text-dynamic-sec mt-1">Users who have been active in the last 15 minutes.</p>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {stats.activeUsersList && stats.activeUsersList.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stats.activeUsersList.map((user: any) => (
+                    <div key={user.id} className="glass p-4 rounded-xl flex items-center justify-between border border-emerald-500/20 hover:border-emerald-500/50 transition-colors cursor-pointer" onClick={() => setSelectedUserId(user.id)}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-dynamic/10 flex items-center justify-center font-bold text-dynamic">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-dynamic text-sm">{user.name}</p>
+                          <p className="text-xs text-dynamic-sec">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] uppercase font-bold text-emerald-500 mb-1">Online</span>
+                        <span className="text-xs text-dynamic-sec">
+                          {new Date(user.lastActiveAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-dynamic-sec font-medium">No users are currently online.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

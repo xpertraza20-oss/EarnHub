@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       totalEarnings,
       recentCompletedTasks,
       totalVisitsResult,
-      activeUsersOnline
+      activeUsersOnlineList
     ] = await Promise.all([
       db.user.count(),
       db.completedTask.count(),
@@ -49,10 +49,14 @@ export async function GET(request: NextRequest) {
         select: { completedAt: true, rewardAmount: true }
       }),
       db.siteAnalytics.aggregate({ _sum: { visits: true } }),
-      db.user.count({ where: { lastActiveAt: { gte: fifteenMinutesAgo } } })
+      db.user.findMany({ 
+        where: { lastActiveAt: { gte: fifteenMinutesAgo } },
+        select: { id: true, name: true, email: true, lastActiveAt: true }
+      })
     ]);
 
     const totalSiteVisits = totalVisitsResult._sum.visits || 0;
+    const activeUsersOnline = activeUsersOnlineList.length;
 
     // Aggregate chart data by day
     const chartDataMap: Record<string, number> = {};
@@ -94,6 +98,7 @@ export async function GET(request: NextRequest) {
       totalEarnings: totalEarnings._sum.rewardAmount || 0,
       totalSiteVisits,
       activeUsersOnline,
+      activeUsersList: activeUsersOnlineList,
       chartData: finalChartData
     };
 
