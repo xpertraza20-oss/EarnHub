@@ -39,7 +39,7 @@ export default function LoginPage() {
       const options = await optionsRes.json();
       
       // 2. Interact with authenticator
-      const authResp = await startRegistration(options);
+      const authResp = await startRegistration({ optionsJSON: options });
       
       // 3. Verify on server
       await fetch('/api/auth/webauthn/verify-registration', {
@@ -78,7 +78,7 @@ export default function LoginPage() {
       const options = await optionsRes.json();
       
       // 2. Interact with authenticator
-      const authResp = await startAuthentication(options);
+      const authResp = await startAuthentication({ optionsJSON: options });
       
       // 3. Verify on server
       const verifyRes = await fetch('/api/auth/webauthn/verify-authentication', {
