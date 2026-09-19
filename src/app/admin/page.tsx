@@ -97,13 +97,13 @@ export default function AdminPage() {
   }
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'users', label: `Users (${users.length})` },
-    { id: 'offerwalls', label: 'Offerwalls' },
-    { id: 'gateways', label: 'Payment APIs' },
-    { id: 'withdrawals', label: `Withdrawals (${withdrawals.filter(w=>w.status === 'pending').length})` },
-    { id: 'analytics', label: `Live Visits (${stats.totalSiteVisits || 0})` },
-    { id: 'online', label: `🟢 Online Now (${stats.activeUsersOnline || 0})` }
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutList, color: 'text-blue-500' },
+    { id: 'users', label: `Users (${users.length})`, icon: Users, color: 'text-purple-500' },
+    { id: 'offerwalls', label: 'Offerwalls', icon: CheckCircle, color: 'text-pink-500' },
+    { id: 'gateways', label: 'Payment APIs', icon: Banknote, color: 'text-amber-500' },
+    { id: 'withdrawals', label: `Withdrawals (${withdrawals.filter(w=>w.status === 'pending').length})`, icon: Clock, color: 'text-orange-500' },
+    { id: 'analytics', label: `Live Visits (${stats.totalSiteVisits || 0})`, icon: Users, color: 'text-blue-400' },
+    { id: 'online', label: `Online Now (${stats.activeUsersOnline || 0})`, icon: CheckCircle, color: 'text-emerald-500' }
   ];
 
   return (
@@ -128,19 +128,27 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 mt-8">
-        {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto gap-4 mb-8 no-scrollbar pb-2">
+        {/* Navigation Tabs - Premium Cards */}
+        <div className="flex overflow-x-auto gap-4 mb-8 no-scrollbar pb-6 px-2 -mx-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-2xl whitespace-nowrap transition-all duration-300 text-sm font-bold border ${
+              className={`min-w-[130px] relative overflow-hidden p-5 rounded-3xl flex flex-col items-center justify-center gap-3 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl border ${
                 activeTab === tab.id
-                  ? 'btn-primary border-transparent'
-                  : 'glass text-dynamic-sec hover:text-dynamic'
+                  ? 'bg-dynamic/10 border-dynamic shadow-[0_0_30px_var(--glow-color)] z-10'
+                  : 'glass border-transparent hover:border-dynamic/30'
               }`}
             >
-              {tab.label}
+              <div className={`p-3.5 rounded-2xl ${activeTab === tab.id ? 'bg-dynamic text-[var(--bg-primary)] shadow-lg' : `bg-dynamic/10 ${tab.color}`} transition-all duration-300`}>
+                <tab.icon size={26} strokeWidth={2.5} />
+              </div>
+              <span className={`text-xs font-extrabold tracking-wide text-center uppercase ${activeTab === tab.id ? 'text-dynamic' : 'text-dynamic-sec'}`}>
+                {tab.label}
+              </span>
+              {activeTab === tab.id && (
+                 <div className="absolute -bottom-1 w-1/2 h-1.5 bg-dynamic rounded-t-full shadow-[0_0_15px_var(--glow-color)]" />
+              )}
             </button>
           ))}
         </div>

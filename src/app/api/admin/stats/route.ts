@@ -85,17 +85,6 @@ export async function GET(request: NextRequest) {
       revenue: chartDataMap[date]
     }));
 
-    // If no real tasks exist, provide dummy data for beautiful UI presentation
-    const finalChartData = recentCompletedTasks.length > 0 ? chartData : [
-      { date: 'Mon', revenue: 4000 },
-      { date: 'Tue', revenue: 3000 },
-      { date: 'Wed', revenue: 2000 },
-      { date: 'Thu', revenue: 2780 },
-      { date: 'Fri', revenue: 1890 },
-      { date: 'Sat', revenue: 2390 },
-      { date: 'Sun', revenue: 3490 },
-    ];
-
     const stats = {
       totalUsers,
       totalTasks,
@@ -105,7 +94,7 @@ export async function GET(request: NextRequest) {
       activeUsersOnline,
       activeUsersList: activeUsersOnlineList,
       visitorLogs,
-      chartData: finalChartData
+      chartData: chartData
     };
 
     return NextResponse.json({ stats });
