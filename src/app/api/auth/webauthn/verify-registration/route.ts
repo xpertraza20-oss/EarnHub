@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
     const { verified, registrationInfo } = verification;
 
     if (verified && registrationInfo) {
-      const { credentialPublicKey, credentialID, counter } = registrationInfo;
+      const { credential } = registrationInfo;
 
       await db.passkey.create({
         data: {
-          credentialID: Buffer.from(credentialID).toString('base64url'),
-          credentialPublicKey: Buffer.from(credentialPublicKey),
-          counter: BigInt(counter),
+          credentialID: credential.id,
+          credentialPublicKey: Buffer.from(credential.publicKey),
+          counter: BigInt(credential.counter),
           transports: body.response.transports ? body.response.transports.join(',') : null,
           userId: decoded.userId
         }

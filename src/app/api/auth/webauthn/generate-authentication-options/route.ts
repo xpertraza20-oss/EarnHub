@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import type { AuthenticatorTransport } from '@simplewebauthn/server';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
 
@@ -29,8 +30,8 @@ export async function POST(request: NextRequest) {
     const options = await generateAuthenticationOptions({
       rpID,
       allowCredentials: user.passkeys.map(passkey => ({
-        id: Buffer.from(passkey.credentialID, 'base64url'),
-        transports: passkey.transports ? (passkey.transports as any).split(',') : [],
+        id: passkey.credentialID,
+        transports: passkey.transports ? (passkey.transports as any).split(',') as AuthenticatorTransport[] : undefined,
       })),
       userVerification: 'preferred',
     });

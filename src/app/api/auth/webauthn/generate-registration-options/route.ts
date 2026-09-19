@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
+import type { AuthenticatorTransport } from '@simplewebauthn/server';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
@@ -35,8 +36,8 @@ export async function GET(request: NextRequest) {
       userName: user.email,
       attestationType: 'none',
       excludeCredentials: user.passkeys.map(passkey => ({
-        id: Buffer.from(passkey.credentialID, 'base64url'),
-        transports: passkey.transports ? (passkey.transports as any).split(',') : [],
+        id: passkey.credentialID,
+        transports: passkey.transports ? (passkey.transports as any).split(',') as AuthenticatorTransport[] : undefined,
       })),
       authenticatorSelection: {
         residentKey: 'required',
