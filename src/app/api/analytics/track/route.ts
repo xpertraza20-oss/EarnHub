@@ -10,11 +10,33 @@ export async function POST(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    await db.siteAnalytics.upsert({
-      where: { date: today },
-      update: { visits: { increment: 1 } },
-      create: { date: today, visits: 1 }
+    const ipAddress = request.headers.get('x-forwarded-for') || request.ip || 'Unknown';
+    const userAgent = request.headers.get('user-agent') || 'Unknown';
+
+    // 1. Increment site total visits ONLY if this IP hasn't visited in the last hour
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+    const existingLog = await db.visitorLog.findFirst({
+      where: {
+        ipAddress,
+        visitedAt: { gte: oneHourAgo }
+      }
     });
+
+    if (!existingLog) {
+      // Create IP log
+      await db.visitorLog.create({
+        data: { ipAddress, userAgent }
+      });
+
+      // Increment today's site visits
+      await db.siteAnalytics.upsert({
+        where: { date: today },
+        update: { visits: { increment: 1 } },
+        create: { date: today, visits: 1 }
+      });
+    }
 
     // 2. If user is logged in, update their lastActiveAt
     const authHeader = request.headers.get('Authorization');

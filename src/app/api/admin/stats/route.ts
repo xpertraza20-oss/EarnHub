@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
       totalEarnings,
       recentCompletedTasks,
       totalVisitsResult,
-      activeUsersOnlineList
+      activeUsersOnlineList,
+      visitorLogs
     ] = await Promise.all([
       db.user.count(),
       db.completedTask.count(),
@@ -52,6 +53,10 @@ export async function GET(request: NextRequest) {
       db.user.findMany({ 
         where: { lastActiveAt: { gte: fifteenMinutesAgo } },
         select: { id: true, name: true, email: true, lastActiveAt: true }
+      }),
+      db.visitorLog.findMany({
+        orderBy: { visitedAt: 'desc' },
+        take: 50
       })
     ]);
 
@@ -99,6 +104,7 @@ export async function GET(request: NextRequest) {
       totalSiteVisits,
       activeUsersOnline,
       activeUsersList: activeUsersOnlineList,
+      visitorLogs,
       chartData: finalChartData
     };
 

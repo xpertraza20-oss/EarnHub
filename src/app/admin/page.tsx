@@ -18,6 +18,7 @@ export default function AdminPage() {
     totalSiteVisits: 0,
     activeUsersOnline: 0,
     activeUsersList: [] as any[],
+    visitorLogs: [] as any[],
     chartData: []
   });
   const [users, setUsers] = useState<any[]>([]);
@@ -383,13 +384,53 @@ export default function AdminPage() {
 
         {/* Analytics & Online Tabs Content */}
         {activeTab === 'analytics' && (
-          <div className="glass-panel rounded-3xl p-12 text-center animate-fade-in-up">
-            <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-6 relative">
-              <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
-              <Users size={32} className="text-blue-500" />
+          <div className="glass-panel rounded-3xl overflow-hidden animate-fade-in-up">
+            <div className="p-8 text-center border-b border-dynamic bg-white/5 dark:bg-black/20">
+              <div className="w-20 h-20 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-6 relative">
+                <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+                <Users size={32} className="text-blue-500" />
+              </div>
+              <h3 className="text-3xl font-extrabold text-dynamic">Total Today: {stats.totalSiteVisits || 0}</h3>
+              <p className="text-dynamic-sec mt-2 font-medium">Total visits to the platform today, including anonymous traffic.</p>
             </div>
-            <h3 className="text-3xl font-extrabold text-dynamic">Total Today: {stats.totalSiteVisits || 0}</h3>
-            <p className="text-dynamic-sec mt-2 font-medium">Total visits to the platform today, including anonymous traffic.</p>
+
+            <div className="p-6">
+              <h4 className="font-bold text-dynamic mb-4 text-lg">Recent Visitors (IP Logs)</h4>
+              {stats.visitorLogs && stats.visitorLogs.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-dynamic/5">
+                        <th className="px-6 py-4 text-xs font-bold text-dynamic-sec uppercase tracking-wider">IP Address</th>
+                        <th className="px-6 py-4 text-xs font-bold text-dynamic-sec uppercase tracking-wider">Time</th>
+                        <th className="px-6 py-4 text-xs font-bold text-dynamic-sec uppercase tracking-wider">Device / Browser</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-dynamic/20">
+                      {stats.visitorLogs.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-dynamic/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="font-mono text-sm font-bold text-dynamic bg-dynamic/10 px-3 py-1 rounded-lg">
+                              {log.ipAddress}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-dynamic">
+                            {new Date(log.visitedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </td>
+                          <td className="px-6 py-4 text-xs text-dynamic-sec max-w-xs truncate" title={log.userAgent}>
+                            {log.userAgent}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-dynamic-sec font-medium">No IP logs available yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
