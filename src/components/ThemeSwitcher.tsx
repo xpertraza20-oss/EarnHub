@@ -50,9 +50,26 @@ export function ThemeSwitcher() {
             {themes.map((t) => (
               <button
                 key={t.value}
-                onClick={() => {
+                onClick={async () => {
                   setTheme(t.value);
                   setIsOpen(false);
+                  
+                  // Save to backend if logged in
+                  const token = localStorage.getItem('token');
+                  if (token) {
+                    try {
+                      await fetch('/api/user/theme', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ theme: t.value })
+                      });
+                    } catch (e) {
+                      console.error('Failed to save theme', e);
+                    }
+                  }
                 }}
                 className={`flex items-center gap-2 p-2 rounded-xl text-left text-xs font-bold transition-all ${
                   theme === t.value 

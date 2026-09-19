@@ -1,16 +1,104 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Mail, Lock, LogIn, Eye, EyeOff, Wallet, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, LogIn, Eye, EyeOff, Wallet, Loader2, Fingerprint } from 'lucide-react';
+import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [fingerprintLoading, setFingerprintLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [supportsWebAuthn, setSupportsWebAuthn] = useState(false);
+
+  useEffect(() => {
+    // Check if WebAuthn is supported
+    if (window.PublicKeyCredential) {
+      setSupportsWebAuthn(true);
+    }
+    // Load saved email if remember me was used
+    const savedEmail = localStorage.getItem('remembered_email');
+    if (savedEmail) {
+      setFormData(prev => ({ ...prev, email: savedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleRegisterPasskey = async (token: string) => {
+    try {
+      // 1. Get registration options
+      const optionsRes = await fetch('/api/auth/webauthn/generate-registration-options', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!optionsRes.ok) return;
+      const options = await optionsRes.json();
+      
+      // 2. Interact with authenticator
+      const authResp = await startRegistration(options);
+      
+      // 3. Verify on server
+      await fetch('/api/auth/webauthn/verify-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(authResp)
+      });
+    } catch (e) {
+      console.error('Failed to register passkey', e);
+    }
+  };
+
+  const handleFingerprintLogin = async () => {
+    if (!formData.email) {
+      setError('Please enter your email first to use Fingerprint login');
+      return;
+    }
+    setFingerprintLoading(true);
+    setError('');
+    
+    try {
+      // 1. Get auth options
+      const optionsRes = await fetch('/api/auth/webauthn/generate-authentication-options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+      
+      if (!optionsRes.ok) {
+        throw new Error('Fingerprint login not set up for this account. Please login with password first and check "Enable Fingerprint".');
+      }
+      
+      const options = await optionsRes.json();
+      
+      // 2. Interact with authenticator
+      const authResp = await startAuthentication(options);
+      
+      // 3. Verify on server
+      const verifyRes = await fetch('/api/auth/webauthn/verify-authentication', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, response: authResp })
+      });
+      
+      const data = await verifyRes.json();
+      if (!verifyRes.ok) throw new Error(data.error || 'Authentication failed');
+      
+      localStorage.setItem('token', data.token);
+      if (data.user?.theme) localStorage.setItem('theme', data.user.theme);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setFingerprintLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +112,20 @@ export default function LoginPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Login failed');
+      
       localStorage.setItem('token', data.token);
+      if (data.user?.theme) localStorage.setItem('theme', data.user.theme);
+      
+      if (rememberMe) {
+        localStorage.setItem('remembered_email', formData.email);
+        if (supportsWebAuthn) {
+          // Attempt to register passkey for future logins
+          await handleRegisterPasskey(data.token);
+        }
+      } else {
+        localStorage.removeItem('remembered_email');
+      }
+      
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -90,17 +191,48 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 mt-2 rounded-xl py-4 font-bold">
-              {loading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" /> Logging in...
-                </>
-              ) : (
-                <>
-                  <LogIn size={20} /> Login to Account
-                </>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-dynamic bg-[var(--glass-bg)] text-[var(--accent-start)] focus:ring-[var(--accent-start)] focus:ring-offset-0"
+                />
+                <span className="text-sm text-dynamic-sec font-medium">Remember me {supportsWebAuthn && "& Enable Fingerprint"}</span>
+              </label>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <button type="submit" disabled={loading || fingerprintLoading} className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 rounded-xl py-4 font-bold">
+                {loading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" /> Logging in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={20} /> Login to Account
+                  </>
+                )}
+              </button>
+
+              {supportsWebAuthn && (
+                <button 
+                  type="button" 
+                  onClick={handleFingerprintLogin}
+                  disabled={loading || fingerprintLoading}
+                  className="w-full glass flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[var(--glass-border)] transition-colors rounded-xl py-4 font-bold text-dynamic"
+                >
+                  {fingerprintLoading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <>
+                      <Fingerprint size={20} className="text-[var(--accent-start)]" /> Login with Fingerprint/FaceID
+                    </>
+                  )}
+                </button>
               )}
-            </button>
+            </div>
           </form>
         </div>
 
