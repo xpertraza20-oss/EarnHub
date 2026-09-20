@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, Wallet, ListTodo, Users, Clock, Gift, Copy, Check, ArrowUpRight, MessageSquare } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import BottomNav from '@/components/BottomNav';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
@@ -11,6 +12,7 @@ import Loader from '@/components/Loader';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -47,6 +49,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    setTheme('system');
     router.push('/');
   };
 

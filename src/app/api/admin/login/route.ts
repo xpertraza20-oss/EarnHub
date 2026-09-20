@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Admin login successful',
-      token
+      token,
+      user: { theme: user.theme }
     });
 
   } catch (error) {

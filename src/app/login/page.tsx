@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Lock, LogIn, Eye, EyeOff, Wallet, Loader2, Fingerprint, ChevronRight } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setTheme } = useTheme();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [fingerprintLoading, setFingerprintLoading] = useState(false);
@@ -97,7 +99,9 @@ export default function LoginPage() {
       if (!verifyRes.ok) throw new Error(data.error || 'Authentication failed');
       
       localStorage.setItem('token', data.token);
-      if (data.user?.theme) localStorage.setItem('theme', data.user.theme);
+      if (data.user?.theme) {
+        setTheme(data.user.theme);
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -120,7 +124,9 @@ export default function LoginPage() {
       if (!response.ok) throw new Error(data.error || 'Login failed');
       
       localStorage.setItem('token', data.token);
-      if (data.user?.theme) localStorage.setItem('theme', data.user.theme);
+      if (data.user?.theme) {
+        setTheme(data.user.theme);
+      }
       
       if (rememberMe) {
         localStorage.setItem('remembered_email', formData.email);

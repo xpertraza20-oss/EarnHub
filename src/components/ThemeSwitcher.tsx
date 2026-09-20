@@ -55,14 +55,17 @@ export function ThemeSwitcher() {
                   setIsOpen(false);
                   
                   // Save to backend if logged in
-                  const token = localStorage.getItem('token');
-                  if (token) {
+                  const userToken = localStorage.getItem('token');
+                  const adminToken = localStorage.getItem('adminToken');
+                  const tokenToUse = userToken || adminToken;
+                  
+                  if (tokenToUse) {
                     try {
                       await fetch('/api/user/theme', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
+                          'Authorization': `Bearer ${tokenToUse}`
                         },
                         body: JSON.stringify({ theme: t.value })
                       });

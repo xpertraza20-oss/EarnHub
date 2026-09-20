@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Lock, Mail, Loader2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { setTheme } = useTheme();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -34,6 +36,9 @@ export default function AdminLoginPage() {
       }
 
       localStorage.setItem('adminToken', data.token);
+      if (data.user?.theme) {
+        setTheme(data.user.theme);
+      }
       router.push('/admin');
     } catch (err: any) {
       setError(err.message);

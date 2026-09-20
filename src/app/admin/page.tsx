@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users, LayoutList, Clock, Banknote, LogOut, CheckCircle, XCircle } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import UserDetailModal from '@/components/admin/UserDetailModal';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import Loader from '@/components/Loader';
 export default function AdminPage() {
   const router = useRouter();
+  const { setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -89,6 +91,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
+    setTheme('system');
     router.push('/admin/login');
   };
 
