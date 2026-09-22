@@ -1,41 +1,53 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import crypto from 'crypto';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // Timewall lets you define custom variables in the postback URL
-    // Recommended URL on Timewall Dashboard:
-    // https://mearnhub.tech/api/postback/timewall?user_id={user_id}&reward={reward}&tx_id={id}&secret={your_secret_key}&status={status}
+    // Timewall standard macros
+    const userId = searchParams.get('userid');
+    const rewardStr = searchParams.get('currency'); // We use currencyAmount for points
+    const revenueStr = searchParams.get('revenue'); // USD revenue for hash validation
+    const txId = searchParams.get('txid');
+    const hash = searchParams.get('hash');
+    const status = searchParams.get('status') || '1';
+    const type = searchParams.get('type') || '0';
     
-    const userId = searchParams.get('user_id') || searchParams.get('uid');
-    const rewardStr = searchParams.get('reward') || searchParams.get('currency');
-    const txId = searchParams.get('tx_id') || searchParams.get('id');
-    const secret = searchParams.get('secret');
-    const status = searchParams.get('status') || '1'; // 1 = approved, 2 = reversed
+    // Status 2 usually means reversed in some offerwalls, but Timewall uses positive/negative values or specific types. 
+    // We will assume negative currency = reversal or type = 2 = reversal depending on their docs, 
+    // but the simplest check is if reward < 0.
     
-    if (!userId || !rewardStr || !txId || !secret) {
+    if (!userId || !rewardStr || !txId || !hash || !revenueStr) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
     const reward = parseFloat(rewardStr);
+    const revenue = revenueStr; // Keep as string for exact hash matching
 
     if (isNaN(reward)) {
       return NextResponse.json({ error: 'Invalid reward amount' }, { status: 400 });
     }
 
-    // Security Check: Match the secret key passed in the URL with the one in our .env
-    // This is a secure method as long as the connection is HTTPS.
-    const expectedSecret = process.env.TIMEWALL_SECRET_KEY;
-    if (!expectedSecret) {
+    // Security Check 1: IP Whitelisting (Optional but recommended)
+    // Timewall IPs: 18.156.132.55, 51.81.120.73, 142.111.248.18
+    // Note: Vercel/Netlify proxies might obscure the real IP unless using req.headers.get('x-forwarded-for')
+    
+    // Security Check 2: Hash Validation
+    // Timewall Hash = hash("sha256", userID . revenue . SecretKey)
+    const secretKey = process.env.TIMEWALL_SECRET_KEY;
+    if (!secretKey) {
       console.error('TIMEWALL_SECRET_KEY is not configured in .env');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    if (secret !== expectedSecret) {
-      console.error(`Invalid secret key. Received: ${secret}`);
-      return NextResponse.json({ error: 'Invalid signature/secret' }, { status: 401 });
+    const stringToHash = `${userId}${revenue}${secretKey}`;
+    const generatedHash = crypto.createHash('sha256').update(stringToHash).digest('hex');
+
+    if (generatedHash !== hash) {
+      console.error(`Invalid hash. Expected: ${generatedHash}, Received: ${hash}`);
+      return NextResponse.json({ error: 'Invalid signature/hash' }, { status: 401 });
     }
 
     // Database Logic
@@ -56,20 +68,20 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Timewall Status 2 usually means chargeback/reversal
-    const isReversal = status === '2' || status === 'reversed';
+    // If reward is negative, it's a chargeback
+    const isReversal = reward < 0 || status === '2';
 
     if (isReversal) {
       await db.user.update({
         where: { id: userId },
-        data: { balance: { decrement: reward } }
+        data: { balance: { decrement: Math.abs(reward) } }
       });
 
       await db.completedTask.create({
         data: {
           userId: userId,
           status: 'reversed',
-          rewardAmount: -reward,
+          rewardAmount: reward, // Store the negative amount
           tx_id: txId,
           provider: 'TimeWall'
         }
